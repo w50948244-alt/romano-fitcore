@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import NavBar from './components/NavBar'
+import CoachBot from './components/CoachBot'
 import Home from './pages/Home'
 import Routines from './pages/Routines'
 import Workout from './pages/Workout'
@@ -38,6 +39,7 @@ function App() {
         <Route path="/perfil" element={<Profile />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+      <CoachBot />
       <NavBar />
     </div>
   )

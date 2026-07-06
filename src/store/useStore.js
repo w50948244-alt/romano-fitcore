@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 const useStore = create((set) => ({
-  profile: { name: 'Romano', age: 25, height: 175, weightStart: 80, goal: 'Ganar fuerza' },
+  profile: { name: 'Romano', age: 25, height: 175, weightStart: 80, goal: 'Ganar fuerza', gender: 'male' },
   routines: [
     { id: '1', name: 'Push Day', days: ['Lunes', 'Jueves'], exercises: [
       { id: 'e1', name: 'Press banca', sets: 4, reps: 8, kg: 60 },

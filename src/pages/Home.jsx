@@ -29,16 +29,19 @@ export default function Home() {
   const [fadeIn, setFadeIn] = useState(true)
 
   useEffect(() => {
-    const cambiarFrase = () => {
-      setFadeIn(false)
-      setTimeout(() => {
-        setFrase(frases[Math.floor(Math.random() * frases.length)])
-        setFadeIn(true)
-      }, 500)
+    const hoy = new Date().toDateString()
+    const guardado = JSON.parse(localStorage.getItem('fraseDelDia') || 'null')
+
+    if (guardado && guardado.fecha === hoy) {
+      // Ya elegimos la frase de hoy, la reutilizamos
+      setFrase(guardado.texto)
+    } else {
+      // Es un nuevo día: elegimos una frase nueva y la guardamos
+      const nueva = frases[Math.floor(Math.random() * frases.length)]
+      localStorage.setItem('fraseDelDia', JSON.stringify({ fecha: hoy, texto: nueva }))
+      setFrase(nueva)
     }
-    cambiarFrase()
-    const interval = setInterval(cambiarFrase, 8000)
-    return () => clearInterval(interval)
+    setFadeIn(true)
   }, [])
 
   const today = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -50,7 +53,9 @@ export default function Home() {
   return (
     <div className="px-5 pt-8 max-w-md mx-auto">
       <p className="text-neutral-500 text-sm capitalize">{today}</p>
-      <h1 className="text-3xl font-bold mt-1 text-white">Hola, {profile.name} 👊</h1>
+      <h1 className="text-3xl font-bold mt-1 text-white">
+        {profile.gender === 'female' ? 'Hola, guerrera' : 'Hola, guerrero'} {profile.name} {profile.gender === 'female' ? '💪🏻' : '👊'}
+      </h1>
 
       <div
         className="mt-5 bg-neutral-900 border border-neutral-800 rounded-2xl p-4 min-h-[64px] flex items-center"

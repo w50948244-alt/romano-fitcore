@@ -43,6 +43,24 @@ export default function Profile() {
             />
           </div>
         ))}
+
+        <div>
+          <label className="text-neutral-500 text-xs">Género</label>
+          <div className="flex bg-neutral-900 rounded-lg p-1 mt-1">
+            <button
+              onClick={() => updateProfile({ gender: 'male' })}
+              className={`flex-1 py-2 rounded-md text-sm font-medium transition ${profile.gender === 'male' ? 'bg-red-600 text-white' : 'text-neutral-400'}`}
+            >
+              Hombre
+            </button>
+            <button
+              onClick={() => updateProfile({ gender: 'female' })}
+              className={`flex-1 py-2 rounded-md text-sm font-medium transition ${profile.gender === 'female' ? 'bg-red-600 text-white' : 'text-neutral-400'}`}
+            >
+              Mujer
+            </button>
+          </div>
+        </div>
       </div>
 
       <button
