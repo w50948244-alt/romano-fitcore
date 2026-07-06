@@ -25,7 +25,7 @@ function calcularRacha(logs) {
 
 // Genera un mensaje de bienvenida personalizado según género, racha y progreso
 function mensajeInicial(profile, logs, weightLogs) {
-  const trato = profile.gender === 'female' ? 'campeona' : 'campeón'
+  const trato = profile.gender === 'female' ? 'campeona' : profile.gender === 'male' ? 'campeón' : 'crack'
   const racha = calcularRacha(logs)
   const perdidoOganado = weightLogs.length > 1
     ? weightLogs[weightLogs.length - 1].weight - weightLogs[0].weight
@@ -46,7 +46,7 @@ function mensajeInicial(profile, logs, weightLogs) {
 // Respuestas del coach ante palabras clave del usuario (reglas simples)
 function responderCoach(texto, profile, logs, routines) {
   const t = texto.toLowerCase()
-  const trato = profile.gender === 'female' ? 'campeona' : 'campeón'
+  const trato = profile.gender === 'female' ? 'campeona' : profile.gender === 'male' ? 'campeón' : 'crack'
 
   if (t.includes('cansad') || t.includes('flojera') || t.includes('no quiero')) {
     return `Sé que hoy cuesta, ${trato}. Pero recuerda: no tienes que sentirte motivada para empezar, solo tienes que empezar. 5 minutos y ves cómo sigues.`
@@ -96,7 +96,7 @@ export default function CoachBot() {
     setInput('')
   }
 
-  const avatarColor = profile.gender === 'female' ? 'bg-pink-600' : 'bg-red-600'
+  const avatarColor = profile.gender === 'female' ? 'bg-pink-600' : profile.gender === 'male' ? 'bg-red-600' : 'bg-neutral-700'
 
   return (
     <>

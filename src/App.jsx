@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
+import useStore from './store/useStore'
 import NavBar from './components/NavBar'
 import CoachBot from './components/CoachBot'
 import Home from './pages/Home'
@@ -12,10 +13,17 @@ import Auth from './pages/Auth'
 
 function App() {
   const [session, setSession] = useState(undefined)
+  const loadProfileForUser = useStore((s) => s.loadProfileForUser)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session))
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      loadProfileForUser(session?.user ?? null)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      loadProfileForUser(session?.user ?? null)
+    })
     return () => subscription.unsubscribe()
   }, [])
 

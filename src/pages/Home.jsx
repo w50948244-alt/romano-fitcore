@@ -54,8 +54,19 @@ export default function Home() {
     <div className="px-5 pt-8 max-w-md mx-auto">
       <p className="text-neutral-500 text-sm capitalize">{today}</p>
       <h1 className="text-3xl font-bold mt-1 text-white">
-        {profile.gender === 'female' ? 'Hola, guerrera' : 'Hola, guerrero'} {profile.name} {profile.gender === 'female' ? '💪🏻' : '👊'}
+        {profile.gender === 'female' && `Hola, guerrera ${profile.name} 💪🏻`}
+        {profile.gender === 'male' && `Hola, guerrero ${profile.name} 👊`}
+        {!profile.gender && `Hola, ${profile.name} 👋`}
       </h1>
+
+      {!profile.gender && (
+        <Link
+          to="/perfil"
+          className="block mt-2 text-xs text-red-500 hover:underline"
+        >
+          Completa tu perfil (selecciona tu género) →
+        </Link>
+      )}
 
       <div
         className="mt-5 bg-neutral-900 border border-neutral-800 rounded-2xl p-4 min-h-[64px] flex items-center"

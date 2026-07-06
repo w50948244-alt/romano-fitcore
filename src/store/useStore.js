@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
-const useStore = create((set) => ({
-  profile: { name: 'Romano', age: 25, height: 175, weightStart: 80, goal: 'Ganar fuerza', gender: 'male' },
+const useStore = create((set, get) => ({
+  profile: { name: '', age: 25, height: 175, weightStart: 80, goal: 'Ganar fuerza', gender: null, userId: null },
   routines: [
     { id: '1', name: 'Push Day', days: ['Lunes', 'Jueves'], exercises: [
       { id: 'e1', name: 'Press banca', sets: 4, reps: 8, kg: 60 },
@@ -19,7 +19,40 @@ const useStore = create((set) => ({
   deleteRoutine: (id) => set((s) => ({ routines: s.routines.filter(r => r.id !== id) })),
   addLog: (log) => set((s) => ({ logs: [...s.logs, { ...log, id: Date.now().toString(), date: new Date().toISOString() }] })),
   addWeightLog: (weight) => set((s) => ({ weightLogs: [...s.weightLogs, { date: new Date().toISOString(), weight }] })),
-  updateProfile: (data) => set((s) => ({ profile: { ...s.profile, ...data } })),
+
+  updateProfile: (data) => set((s) => {
+    const nuevoPerfil = { ...s.profile, ...data }
+    // Si cambia el genero y ya sabemos el usuario, lo guardamos para esa cuenta especifica
+    if (data.gender && nuevoPerfil.userId) {
+      localStorage.setItem(`fitcore_gender_${nuevoPerfil.userId}`, data.gender)
+    }
+    return { profile: nuevoPerfil }
+  }),
+
+  // Se llama cuando Supabase confirma la sesion (login con Google o con correo)
+  loadProfileForUser: (user) => {
+    if (!user) {
+      // Sin sesion: perfil vacio
+      set({ profile: { name: '', age: 25, height: 175, weightStart: 80, goal: 'Ganar fuerza', gender: null, userId: null } })
+      return
+    }
+    const nombreDetectado =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email?.split('@')[0] ||
+      'Usuario'
+
+    const generoGuardado = localStorage.getItem(`fitcore_gender_${user.id}`)
+
+    set((s) => ({
+      profile: {
+        ...s.profile,
+        name: nombreDetectado,
+        gender: generoGuardado || null,
+        userId: user.id,
+      },
+    }))
+  },
 }))
 
 export default useStore
