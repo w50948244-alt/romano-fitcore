@@ -1,4 +1,5 @@
 import useStore from '../store/useStore'
+import { supabase } from '../lib/supabase'
 
 export default function Profile() {
   const profile = useStore((s) => s.profile)
@@ -6,6 +7,10 @@ export default function Profile() {
   const weightLogs = useStore((s) => s.weightLogs)
 
   const currentWeight = weightLogs[weightLogs.length - 1]?.weight ?? profile.weightStart
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+  }
 
   return (
     <div className="px-5 pt-8 max-w-md mx-auto">
@@ -39,6 +44,13 @@ export default function Profile() {
           </div>
         ))}
       </div>
+
+      <button
+        onClick={handleLogout}
+        className="w-full mt-8 border border-red-600 text-red-500 rounded-xl py-3 text-sm font-medium"
+      >
+        Cerrar sesión
+      </button>
     </div>
   )
 }
