@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
+import { Info } from 'lucide-react'
 import useStore from '../store/useStore'
+import { buscarGuia } from '../lib/exerciseLibrary'
 
 export default function Workout() {
   const routines = useStore((s) => s.routines)
@@ -7,6 +9,7 @@ export default function Workout() {
   const [active, setActive] = useState(null)
   const [seconds, setSeconds] = useState(0)
   const [data, setData] = useState({})
+  const [guiaAbierta, setGuiaAbierta] = useState(null)
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -58,22 +61,38 @@ export default function Workout() {
       </div>
 
       <div className="mt-5 space-y-3">
-        {active.exercises.map((ex) => (
-          <div key={ex.id} className="bg-neutral-900 rounded-xl p-4">
-            <p className="font-semibold mb-2">{ex.name}</p>
-            <div className="flex gap-2">
-              {['sets', 'reps', 'kg'].map((field) => (
-                <input
-                  key={field}
-                  type="number"
-                  value={data[ex.id]?.[field] ?? 0}
-                  onChange={(e) => setData((d) => ({ ...d, [ex.id]: { ...d[ex.id], [field]: Number(e.target.value) } }))}
-                  className="flex-1 bg-neutral-800 rounded-lg px-2 py-2 text-sm text-center outline-none"
-                />
-              ))}
+        {active.exercises.map((ex) => {
+          const info = buscarGuia(ex.name)
+          return (
+            <div key={ex.id} className="bg-neutral-900 rounded-xl p-4">
+              <div className="flex justify-between items-center mb-2">
+                <p className="font-semibold">{ex.name}</p>
+                <button onClick={() => setGuiaAbierta(guiaAbierta === ex.id ? null : ex.id)} className="text-red-500">
+                  <Info size={16} />
+                </button>
+              </div>
+              {guiaAbierta === ex.id && (
+                <div className="bg-neutral-800 rounded-lg p-3 mb-2">
+                  <p className="text-xs text-red-400 uppercase mb-1">{info.grupo}</p>
+                  <ol className="list-decimal list-inside space-y-1 text-neutral-300 text-xs">
+                    {info.guia.map((paso, i) => <li key={i}>{paso}</li>)}
+                  </ol>
+                </div>
+              )}
+              <div className="flex gap-2">
+                {['sets', 'reps', 'kg'].map((field) => (
+                  <input
+                    key={field}
+                    type="number"
+                    value={data[ex.id]?.[field] ?? 0}
+                    onChange={(e) => setData((d) => ({ ...d, [ex.id]: { ...d[ex.id], [field]: Number(e.target.value) } }))}
+                    className="flex-1 bg-neutral-800 rounded-lg px-2 py-2 text-sm text-center outline-none"
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <button onClick={finish} className="w-full bg-red-600 rounded-xl py-3 mt-5 font-semibold">

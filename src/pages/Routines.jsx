@@ -1,20 +1,32 @@
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, Sparkles, Info } from 'lucide-react'
 import useStore from '../store/useStore'
+import { generarRutinaRecomendada, buscarGuia } from '../lib/exerciseLibrary'
 
 export default function Routines() {
   const routines = useStore((s) => s.routines)
   const deleteRoutine = useStore((s) => s.deleteRoutine)
   const addRoutine = useStore((s) => s.addRoutine)
+  const profile = useStore((s) => s.profile)
   const [expanded, setExpanded] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
+  const [guiaAbierta, setGuiaAbierta] = useState(null)
 
   const handleAdd = () => {
     if (!name.trim()) return
     addRoutine({ name, days: [], exercises: [] })
     setName('')
     setShowForm(false)
+  }
+
+  const handleRecomendada = () => {
+    if (!profile.age || !profile.height || !profile.weightStart) {
+      alert('Completa tu edad, altura y peso en Perfil para generar una rutina a tu medida.')
+      return
+    }
+    const rutina = generarRutinaRecomendada(profile)
+    addRoutine(rutina)
   }
 
   return (
@@ -25,6 +37,17 @@ export default function Routines() {
           <Plus size={20} />
         </button>
       </div>
+
+      <button
+        onClick={handleRecomendada}
+        className="w-full mt-4 bg-gradient-to-r from-red-600 to-red-700 rounded-xl p-4 flex items-center gap-3 hover:opacity-90 transition"
+      >
+        <Sparkles size={22} className="text-white" />
+        <div className="text-left">
+          <p className="font-semibold text-white text-sm">Generar rutina para mí</p>
+          <p className="text-red-100 text-xs">Según tu peso, edad, altura y objetivo</p>
+        </div>
+      </button>
 
       {showForm && (
         <div className="mt-4 bg-neutral-900 rounded-xl p-4 flex gap-2">
@@ -56,12 +79,31 @@ export default function Routines() {
             {expanded === r.id && (
               <div className="mt-3 space-y-2 border-t border-neutral-800 pt-3">
                 {r.exercises.length === 0 && <p className="text-neutral-600 text-sm">Sin ejercicios aún.</p>}
-                {r.exercises.map((ex) => (
-                  <div key={ex.id} className="flex justify-between text-sm">
-                    <span>{ex.name}</span>
-                    <span className="text-neutral-500">{ex.sets}x{ex.reps} · {ex.kg}kg</span>
-                  </div>
-                ))}
+                {r.exercises.map((ex) => {
+                  const idGuia = `${r.id}_${ex.id}`
+                  const info = buscarGuia(ex.name)
+                  return (
+                    <div key={ex.id} className="text-sm">
+                      <div className="flex justify-between items-center">
+                        <span>{ex.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-neutral-500">{ex.sets}x{ex.reps} · {ex.kg}kg</span>
+                          <button onClick={() => setGuiaAbierta(guiaAbierta === idGuia ? null : idGuia)} className="text-red-500">
+                            <Info size={15} />
+                          </button>
+                        </div>
+                      </div>
+                      {guiaAbierta === idGuia && (
+                        <div className="mt-2 bg-neutral-800 rounded-lg p-3">
+                          <p className="text-xs text-red-400 uppercase mb-1">{info.grupo}</p>
+                          <ol className="list-decimal list-inside space-y-1 text-neutral-300 text-xs">
+                            {info.guia.map((paso, i) => <li key={i}>{paso}</li>)}
+                          </ol>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
