@@ -76,7 +76,7 @@ export default function Workout() {
         setActive(null)
         clearInterval(intervalRef.current)
         setMostrarConfeti(false)
-      }, 1800)
+      }, 2600)
     }
   }
 
