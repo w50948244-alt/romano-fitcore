@@ -17,6 +17,11 @@ function App() {
   const cargandoDatos = useStore((s) => s.cargandoDatos)
 
   useEffect(() => {
+    const temaGuardado = localStorage.getItem('fitcore_theme')
+    if (temaGuardado === 'light') document.body.classList.add('light')
+  }, [])
+
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       loadProfileForUser(session?.user ?? null)

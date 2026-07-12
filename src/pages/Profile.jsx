@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Sun, Moon } from 'lucide-react'
 import useStore from '../store/useStore'
 import { supabase } from '../lib/supabase'
 
@@ -8,6 +9,21 @@ export default function Profile() {
   const weightLogs = useStore((s) => s.weightLogs)
   const addWeightLog = useStore((s) => s.addWeightLog)
   const [nuevoPeso, setNuevoPeso] = useState('')
+  const [modoClaro, setModoClaro] = useState(false)
+
+  useEffect(() => {
+    const guardado = localStorage.getItem('fitcore_theme')
+    const esClaro = guardado === 'light'
+    setModoClaro(esClaro)
+    document.body.classList.toggle('light', esClaro)
+  }, [])
+
+  const toggleTema = () => {
+    const nuevo = !modoClaro
+    setModoClaro(nuevo)
+    document.body.classList.toggle('light', nuevo)
+    localStorage.setItem('fitcore_theme', nuevo ? 'light' : 'dark')
+  }
 
   const currentWeight = weightLogs[weightLogs.length - 1]?.weight ?? profile.weightStart
 
@@ -95,8 +111,21 @@ export default function Profile() {
       </div>
 
       <button
+        onClick={toggleTema}
+        className="w-full mt-6 bg-neutral-900 rounded-xl p-4 flex items-center justify-between"
+      >
+        <div className="flex items-center gap-2">
+          {modoClaro ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-blue-400" />}
+          <span className="text-sm font-medium">{modoClaro ? 'Modo claro' : 'Modo oscuro'}</span>
+        </div>
+        <div className={`w-11 h-6 rounded-full flex items-center px-0.5 transition ${modoClaro ? 'bg-red-600 justify-end' : 'bg-neutral-700 justify-start'}`}>
+          <div className="w-5 h-5 rounded-full bg-white" />
+        </div>
+      </button>
+
+      <button
         onClick={handleLogout}
-        className="w-full mt-8 border border-red-600 text-red-500 rounded-xl py-3 text-sm font-medium"
+        className="w-full mt-3 border border-red-600 text-red-500 rounded-xl py-3 text-sm font-medium"
       >
         Cerrar sesión
       </button>

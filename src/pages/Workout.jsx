@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Info, Trophy } from 'lucide-react'
+import { Info, Trophy, Timer } from 'lucide-react'
 import useStore from '../store/useStore'
 import { buscarGuia } from '../lib/exerciseLibrary'
 
@@ -11,6 +11,7 @@ export default function Workout() {
   const [data, setData] = useState({})
   const [guiaAbierta, setGuiaAbierta] = useState(null)
   const [recordsNuevos, setRecordsNuevos] = useState([])
+  const [descanso, setDescanso] = useState(null) // segundos restantes del descanso, o null si no hay
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -19,6 +20,21 @@ export default function Workout() {
     }
     return () => clearInterval(intervalRef.current)
   }, [active])
+
+  useEffect(() => {
+    if (descanso === null) return
+    if (descanso <= 0) {
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200])
+      const t = setTimeout(() => setDescanso(null), 1200)
+      return () => clearTimeout(t)
+    }
+    const t = setTimeout(() => setDescanso((d) => d - 1), 1000)
+    return () => clearTimeout(t)
+  }, [descanso])
+
+  const iniciarDescanso = (segundos) => {
+    setDescanso(segundos)
+  }
 
   const start = (routine) => {
     setActive(routine)
@@ -84,6 +100,23 @@ export default function Workout() {
         </div>
       )}
 
+      {descanso !== null && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center">
+          <p className="text-neutral-400 text-sm uppercase tracking-wide mb-2">Descansando</p>
+          <p className="text-7xl font-bold tabular-nums text-red-500">
+            {descanso > 0 ? descanso : '¡Vamos! 💪'}
+          </p>
+          {descanso > 0 && (
+            <button
+              onClick={() => setDescanso(0)}
+              className="mt-8 text-neutral-400 text-sm underline"
+            >
+              Saltar descanso
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="bg-red-600 rounded-2xl p-5 text-center">
         <p className="text-red-100 text-xs uppercase">{active.name}</p>
         <p className="text-4xl font-bold mt-1 tabular-nums">{fmt(seconds)}</p>
@@ -123,6 +156,20 @@ export default function Workout() {
                     className="flex-1 w-0 bg-neutral-800 rounded-lg px-2 py-2 text-sm text-center outline-none box-border"
                   />
                 ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => iniciarDescanso(60)}
+                  className="flex-1 flex items-center justify-center gap-1 bg-neutral-800 hover:bg-neutral-700 transition rounded-lg py-2 text-xs text-neutral-300"
+                >
+                  <Timer size={13} /> Descansar 60s
+                </button>
+                <button
+                  onClick={() => iniciarDescanso(90)}
+                  className="flex-1 flex items-center justify-center gap-1 bg-neutral-800 hover:bg-neutral-700 transition rounded-lg py-2 text-xs text-neutral-300"
+                >
+                  <Timer size={13} /> 90s
+                </button>
               </div>
             </div>
           )

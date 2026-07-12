@@ -1,13 +1,33 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { Trophy } from 'lucide-react'
+import { Trophy, Share2, Flame } from 'lucide-react'
 import useStore from '../store/useStore'
+import { calcularRacha } from '../lib/streak'
+
+// Genera los ultimos 35 dias (5 semanas) para el mapa de calor
+function generarDiasCalendario(logs) {
+  const diasConEntreno = new Set(logs.map((l) => new Date(l.date).toDateString()))
+  const dias = []
+  for (let i = 34; i >= 0; i--) {
+    const fecha = new Date()
+    fecha.setDate(fecha.getDate() - i)
+    dias.push({
+      fecha,
+      entreno: diasConEntreno.has(fecha.toDateString()),
+      esHoy: i === 0,
+    })
+  }
+  return dias
+}
 
 export default function Progress() {
   const weightLogs = useStore((s) => s.weightLogs)
   const addWeightLog = useStore((s) => s.addWeightLog)
   const personalRecords = useStore((s) => s.personalRecords)
+  const logs = useStore((s) => s.logs)
+  const profile = useStore((s) => s.profile)
   const [weight, setWeight] = useState('')
+  const canvasRef = useRef(null)
 
   const chartData = weightLogs.map((w) => ({
     date: new Date(w.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
@@ -15,6 +35,8 @@ export default function Progress() {
   }))
 
   const recordsOrdenados = Object.entries(personalRecords || {}).sort((a, b) => b[1].kg - a[1].kg)
+  const diasCalendario = generarDiasCalendario(logs)
+  const racha = calcularRacha(logs)
 
   const handleAdd = () => {
     if (!weight) return
@@ -22,11 +44,109 @@ export default function Progress() {
     setWeight('')
   }
 
+  const compartirLogro = () => {
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    canvas.width = 800
+    canvas.height = 800
+
+    // Fondo con degrade
+    const grad = ctx.createLinearGradient(0, 0, 0, 800)
+    grad.addColorStop(0, '#1a1a1a')
+    grad.addColorStop(1, '#0a0a0a')
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, 800, 800)
+
+    // Franja roja arriba
+    ctx.fillStyle = '#dc2626'
+    ctx.fillRect(0, 0, 800, 12)
+
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#737373'
+    ctx.font = '28px Arial'
+    ctx.fillText('ROMANO FITCORE', 400, 100)
+
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 44px Arial'
+    ctx.fillText(profile.name || 'Atleta', 400, 160)
+
+    const mejorRecord = recordsOrdenados[0]
+
+    ctx.fillStyle = '#dc2626'
+    ctx.font = 'bold 130px Arial'
+    ctx.fillText(mejorRecord ? `${mejorRecord[1].kg}kg` : `${racha}`, 400, 380)
+
+    ctx.fillStyle = '#a3a3a3'
+    ctx.font = '32px Arial'
+    ctx.fillText(mejorRecord ? `Récord en ${mejorRecord[0]}` : 'Días de racha entrenando', 400, 430)
+
+    ctx.fillStyle = '#525252'
+    ctx.font = '24px Arial'
+    ctx.fillText(`🔥 ${racha} días seguidos  ·  ${logs.length} entrenamientos totales`, 400, 520)
+
+    ctx.fillStyle = '#404040'
+    ctx.font = '20px Arial'
+    ctx.fillText(new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }), 400, 720)
+
+    canvas.toBlob(async (blob) => {
+      const file = new File([blob], 'mi-logro-fitcore.png', { type: 'image/png' })
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'Mi logro en Romano FitCore' })
+          return
+        } catch (e) {
+          // si cancela el share, cae al metodo de descarga
+        }
+      }
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'mi-logro-fitcore.png'
+      a.click()
+      URL.revokeObjectURL(url)
+    }, 'image/png')
+  }
+
   return (
     <div className="px-5 pt-8 max-w-md mx-auto pb-6">
-      <h1 className="text-2xl font-bold">Progreso</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Progreso</h1>
+        <button
+          onClick={compartirLogro}
+          className="flex items-center gap-1.5 bg-neutral-900 hover:bg-neutral-800 transition rounded-lg px-3 py-2 text-xs font-medium"
+        >
+          <Share2 size={14} className="text-red-500" /> Compartir
+        </button>
+      </div>
+      <canvas ref={canvasRef} className="hidden" />
 
-      <div className="mt-5 bg-neutral-900 rounded-xl p-4">
+      {racha > 0 && (
+        <div className="mt-4 flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-xl px-4 py-3">
+          <Flame size={20} className="text-orange-500" />
+          <p className="text-sm text-orange-400 font-semibold">{racha} {racha === 1 ? 'día seguido' : 'días seguidos'} entrenando</p>
+        </div>
+      )}
+
+      <div className="mt-4 bg-neutral-900 rounded-xl p-4">
+        <p className="text-neutral-500 text-xs uppercase mb-3">Últimos 35 días</p>
+        <div className="grid grid-cols-7 gap-1.5">
+          {diasCalendario.map((d, i) => (
+            <div
+              key={i}
+              title={d.fecha.toLocaleDateString('es-ES')}
+              className={`aspect-square rounded-sm ${
+                d.entreno ? 'bg-red-600' : 'bg-neutral-800'
+              } ${d.esHoy ? 'ring-2 ring-white/50' : ''}`}
+            />
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5 mt-3 text-[10px] text-neutral-600">
+          <div className="w-2.5 h-2.5 rounded-sm bg-neutral-800" /> sin entrenar
+          <div className="w-2.5 h-2.5 rounded-sm bg-red-600 ml-2" /> entrenaste
+        </div>
+      </div>
+
+      <div className="mt-4 bg-neutral-900 rounded-xl p-4">
         <p className="text-neutral-500 text-xs uppercase mb-2">Evolución de peso</p>
         <ResponsiveContainer width="100%" height={180}>
           <LineChart data={chartData}>
