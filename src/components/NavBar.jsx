@@ -1,11 +1,10 @@
 ﻿import { NavLink } from 'react-router-dom'
-import { Home, Dumbbell, Play, TrendingUp, User, BookOpen } from 'lucide-react'
+import { Home, Dumbbell, Play, TrendingUp, User } from 'lucide-react'
 
 const links = [
   { to: '/', label: 'Inicio', icon: Home },
   { to: '/rutinas', label: 'Rutinas', icon: Dumbbell },
   { to: '/workout', label: 'Entrenar', icon: Play },
-  { to: '/guia', label: 'Guia', icon: BookOpen },
   { to: '/progreso', label: 'Progreso', icon: TrendingUp },
   { to: '/perfil', label: 'Perfil', icon: User },
 ]
