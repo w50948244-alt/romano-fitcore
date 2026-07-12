@@ -10,9 +10,11 @@ import Workout from './pages/Workout'
 import Progress from './pages/Progress'
 import Profile from './pages/Profile'
 import Auth from './pages/Auth'
+import ResetPassword from './pages/ResetPassword'
 
 function App() {
   const [session, setSession] = useState(undefined)
+  const [esRecuperacion, setEsRecuperacion] = useState(false)
   const loadProfileForUser = useStore((s) => s.loadProfileForUser)
   const cargandoDatos = useStore((s) => s.cargandoDatos)
 
@@ -26,12 +28,15 @@ function App() {
       setSession(session)
       loadProfileForUser(session?.user ?? null)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') setEsRecuperacion(true)
       setSession(session)
       loadProfileForUser(session?.user ?? null)
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  if (esRecuperacion) return <ResetPassword />
 
   if (session === undefined || (session && cargandoDatos)) {
     return (
