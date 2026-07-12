@@ -83,10 +83,15 @@ export default function Workout() {
                 {['sets', 'reps', 'kg'].map((field) => (
                   <input
                     key={field}
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={data[ex.id]?.[field] ?? 0}
-                    onChange={(e) => setData((d) => ({ ...d, [ex.id]: { ...d[ex.id], [field]: Number(e.target.value) } }))}
-                    className="flex-1 bg-neutral-800 rounded-lg px-2 py-2 text-sm text-center outline-none"
+                    onChange={(e) => {
+                      const soloNumeros = e.target.value.replace(/[^0-9]/g, '')
+                      setData((d) => ({ ...d, [ex.id]: { ...d[ex.id], [field]: Number(soloNumeros) } }))
+                    }}
+                    className="flex-1 w-0 bg-neutral-800 rounded-lg px-2 py-2 text-sm text-center outline-none box-border"
                   />
                 ))}
               </div>
