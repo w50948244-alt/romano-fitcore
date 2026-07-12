@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Info } from 'lucide-react'
+import { Info, Trophy } from 'lucide-react'
 import useStore from '../store/useStore'
 import { buscarGuia } from '../lib/exerciseLibrary'
 
@@ -10,6 +10,7 @@ export default function Workout() {
   const [seconds, setSeconds] = useState(0)
   const [data, setData] = useState({})
   const [guiaAbierta, setGuiaAbierta] = useState(null)
+  const [recordsNuevos, setRecordsNuevos] = useState([])
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -22,6 +23,7 @@ export default function Workout() {
   const start = (routine) => {
     setActive(routine)
     setSeconds(0)
+    setRecordsNuevos([])
     const init = {}
     routine.exercises.forEach((ex) => { init[ex.id] = { sets: ex.sets, reps: ex.reps, kg: ex.kg } })
     setData(init)
@@ -29,9 +31,26 @@ export default function Workout() {
 
   const finish = () => {
     const volume = Object.values(data).reduce((acc, d) => acc + d.sets * d.reps * d.kg, 0)
-    addLog({ routineName: active.name, durationSeconds: seconds, volume })
-    setActive(null)
-    clearInterval(intervalRef.current)
+    const exercisesDetail = active.exercises.map((ex) => ({
+      name: ex.name,
+      sets: data[ex.id]?.sets ?? 0,
+      reps: data[ex.id]?.reps ?? 0,
+      kg: data[ex.id]?.kg ?? 0,
+    }))
+
+    const nuevos = addLog({ routineName: active.name, durationSeconds: seconds, volume }, exercisesDetail)
+
+    if (nuevos.length > 0) {
+      setRecordsNuevos(nuevos)
+      setTimeout(() => {
+        setActive(null)
+        clearInterval(intervalRef.current)
+        setRecordsNuevos([])
+      }, 2600)
+    } else {
+      setActive(null)
+      clearInterval(intervalRef.current)
+    }
   }
 
   const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
@@ -54,7 +73,17 @@ export default function Workout() {
   }
 
   return (
-    <div className="px-5 pt-8 max-w-md mx-auto">
+    <div className="px-5 pt-8 max-w-md mx-auto relative">
+      {recordsNuevos.length > 0 && (
+        <div className="fixed top-6 left-5 right-5 max-w-md mx-auto bg-yellow-500 text-neutral-900 rounded-xl p-4 z-50 flex items-center gap-3 shadow-xl">
+          <Trophy size={24} />
+          <div>
+            <p className="font-bold text-sm">¡Nuevo récord personal! 🎉</p>
+            <p className="text-xs">{recordsNuevos.join(', ')}</p>
+          </div>
+        </div>
+      )}
+
       <div className="bg-red-600 rounded-2xl p-5 text-center">
         <p className="text-red-100 text-xs uppercase">{active.name}</p>
         <p className="text-4xl font-bold mt-1 tabular-nums">{fmt(seconds)}</p>

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import useStore from '../store/useStore'
+import { calcularRacha } from '../lib/streak'
 
 const frases = [
   "El dolor que sientes hoy es la fuerza que sentirás mañana.",
@@ -49,6 +50,7 @@ export default function Home() {
   const todayRoutine = routines.find(r => r.days.some(d => d.toLowerCase() === dayName.toLowerCase()))
   const currentWeight = weightLogs[weightLogs.length - 1]?.weight ?? '-'
   const sessionsThisWeek = logs.length
+  const racha = calcularRacha(logs)
 
   return (
     <div className="px-5 pt-8 max-w-md mx-auto">
@@ -66,6 +68,13 @@ export default function Home() {
         >
           Completa tu perfil (selecciona tu género) →
         </Link>
+      )}
+
+      {racha > 0 && (
+        <div className="mt-3 inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-full px-3 py-1.5">
+          <span className="text-lg">🔥</span>
+          <span className="text-orange-400 text-sm font-semibold">{racha} {racha === 1 ? 'día seguido' : 'días seguidos'} entrenando</span>
+        </div>
       )}
 
       <div

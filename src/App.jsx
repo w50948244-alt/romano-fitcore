@@ -14,6 +14,7 @@ import Auth from './pages/Auth'
 function App() {
   const [session, setSession] = useState(undefined)
   const loadProfileForUser = useStore((s) => s.loadProfileForUser)
+  const cargandoDatos = useStore((s) => s.cargandoDatos)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -27,10 +28,11 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (session === undefined) {
+  if (session === undefined || (session && cargandoDatos)) {
     return (
-      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center gap-3">
         <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-neutral-600 text-xs">Sincronizando tu progreso...</p>
       </div>
     )
   }

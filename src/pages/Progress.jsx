@@ -1,16 +1,20 @@
 import { useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { Trophy } from 'lucide-react'
 import useStore from '../store/useStore'
 
 export default function Progress() {
   const weightLogs = useStore((s) => s.weightLogs)
   const addWeightLog = useStore((s) => s.addWeightLog)
+  const personalRecords = useStore((s) => s.personalRecords)
   const [weight, setWeight] = useState('')
 
   const chartData = weightLogs.map((w) => ({
     date: new Date(w.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
     peso: w.weight,
   }))
+
+  const recordsOrdenados = Object.entries(personalRecords || {}).sort((a, b) => b[1].kg - a[1].kg)
 
   const handleAdd = () => {
     if (!weight) return
@@ -19,7 +23,7 @@ export default function Progress() {
   }
 
   return (
-    <div className="px-5 pt-8 max-w-md mx-auto">
+    <div className="px-5 pt-8 max-w-md mx-auto pb-6">
       <h1 className="text-2xl font-bold">Progreso</h1>
 
       <div className="mt-5 bg-neutral-900 rounded-xl p-4">
@@ -45,7 +49,33 @@ export default function Progress() {
         <button onClick={handleAdd} className="bg-red-600 px-4 rounded-lg text-sm font-medium">Guardar</button>
       </div>
 
-      <div className="mt-5">
+      <div className="mt-6">
+        <p className="text-neutral-500 text-xs uppercase mb-2 flex items-center gap-1">
+          <Trophy size={13} className="text-yellow-500" /> Récords personales
+        </p>
+        {recordsOrdenados.length === 0 ? (
+          <div className="bg-neutral-900 rounded-xl p-4 text-center">
+            <p className="text-neutral-600 text-sm">Aún no tienes récords. Termina un entrenamiento para empezar a marcarlos.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {recordsOrdenados.map(([nombre, r]) => (
+              <div key={nombre} className="flex justify-between items-center bg-neutral-900 rounded-lg px-3 py-2.5">
+                <div className="flex items-center gap-2">
+                  <Trophy size={16} className="text-yellow-500" />
+                  <span className="text-sm">{nombre}</span>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-sm">{r.kg} kg</p>
+                  <p className="text-neutral-600 text-[10px]">{new Date(r.date).toLocaleDateString('es-ES')}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6">
         <p className="text-neutral-500 text-xs uppercase mb-2">Historial</p>
         <div className="space-y-2">
           {[...weightLogs].reverse().map((w, i) => (
