@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Info, Trophy, Timer } from 'lucide-react'
 import useStore from '../store/useStore'
 import { buscarGuia } from '../lib/exerciseLibrary'
+import { sonidoDescansoTerminado, sonidoLogro } from '../lib/sound'
+import Confetti from '../components/Confetti'
 
 export default function Workout() {
   const routines = useStore((s) => s.routines)
@@ -12,6 +14,7 @@ export default function Workout() {
   const [guiaAbierta, setGuiaAbierta] = useState(null)
   const [recordsNuevos, setRecordsNuevos] = useState([])
   const [descanso, setDescanso] = useState(null) // segundos restantes del descanso, o null si no hay
+  const [mostrarConfeti, setMostrarConfeti] = useState(false)
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -25,6 +28,7 @@ export default function Workout() {
     if (descanso === null) return
     if (descanso <= 0) {
       if (navigator.vibrate) navigator.vibrate([200, 100, 200])
+      sonidoDescansoTerminado()
       const t = setTimeout(() => setDescanso(null), 1200)
       return () => clearTimeout(t)
     }
@@ -56,16 +60,23 @@ export default function Workout() {
 
     const nuevos = addLog({ routineName: active.name, durationSeconds: seconds, volume }, exercisesDetail)
 
+    sonidoLogro()
+    setMostrarConfeti(true)
+
     if (nuevos.length > 0) {
       setRecordsNuevos(nuevos)
       setTimeout(() => {
         setActive(null)
         clearInterval(intervalRef.current)
         setRecordsNuevos([])
+        setMostrarConfeti(false)
       }, 2600)
     } else {
-      setActive(null)
-      clearInterval(intervalRef.current)
+      setTimeout(() => {
+        setActive(null)
+        clearInterval(intervalRef.current)
+        setMostrarConfeti(false)
+      }, 1800)
     }
   }
 
@@ -90,6 +101,8 @@ export default function Workout() {
 
   return (
     <div className="px-5 pt-8 max-w-md mx-auto relative">
+      {mostrarConfeti && <Confetti />}
+
       {recordsNuevos.length > 0 && (
         <div className="fixed top-6 left-5 right-5 max-w-md mx-auto bg-yellow-500 text-neutral-900 rounded-xl p-4 z-50 flex items-center gap-3 shadow-xl">
           <Trophy size={24} />
