@@ -4,20 +4,44 @@ import { Trophy, Share2, Flame } from 'lucide-react'
 import useStore from '../store/useStore'
 import { calcularRacha } from '../lib/streak'
 
-// Genera los ultimos 35 dias (5 semanas) para el mapa de calor
+const DIAS_SEMANA = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+
+// Genera 5 semanas completas (lunes a domingo) terminando en la semana actual
 function generarDiasCalendario(logs) {
   const diasConEntreno = new Set(logs.map((l) => new Date(l.date).toDateString()))
+
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  const diaSemana = (hoy.getDay() + 6) % 7 // lunes = 0 ... domingo = 6
+  const lunesDeEstaSemana = new Date(hoy)
+  lunesDeEstaSemana.setDate(hoy.getDate() - diaSemana)
+  const inicio = new Date(lunesDeEstaSemana)
+  inicio.setDate(lunesDeEstaSemana.getDate() - 28) // retrocede 4 semanas mas = 5 semanas totales
+
   const dias = []
-  for (let i = 34; i >= 0; i--) {
-    const fecha = new Date()
-    fecha.setDate(fecha.getDate() - i)
+  for (let i = 0; i < 35; i++) {
+    const fecha = new Date(inicio)
+    fecha.setDate(inicio.getDate() + i)
     dias.push({
       fecha,
       entreno: diasConEntreno.has(fecha.toDateString()),
-      esHoy: i === 0,
+      esHoy: fecha.toDateString() === hoy.toDateString(),
+      esFuturo: fecha > hoy,
     })
   }
   return dias
+}
+
+// Arma el texto del mes (o meses) que cubre el calendario, ej: "Junio - Julio 2026"
+function textoMeses(dias) {
+  const primero = dias[0].fecha
+  const ultimo = dias[dias.length - 1].fecha
+  const mesA = primero.toLocaleDateString('es-ES', { month: 'long' })
+  const mesB = ultimo.toLocaleDateString('es-ES', { month: 'long' })
+  const anio = ultimo.getFullYear()
+  const mesATxt = mesA.charAt(0).toUpperCase() + mesA.slice(1)
+  const mesBTxt = mesB.charAt(0).toUpperCase() + mesB.slice(1)
+  return mesA === mesB ? `${mesATxt} ${anio}` : `${mesATxt} - ${mesBTxt} ${anio}`
 }
 
 export default function Progress() {
@@ -128,13 +152,24 @@ export default function Progress() {
       )}
 
       <div className="mt-4 bg-neutral-900 rounded-xl p-4">
-        <p className="text-neutral-500 text-xs uppercase mb-3">Últimos 35 días</p>
+        <div className="flex justify-between items-center mb-3">
+          <p className="text-neutral-500 text-xs uppercase">Constancia</p>
+          <p className="text-neutral-400 text-xs font-medium">{textoMeses(diasCalendario)}</p>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1.5 mb-1.5">
+          {DIAS_SEMANA.map((d, i) => (
+            <p key={i} className="text-center text-[10px] text-neutral-600">{d}</p>
+          ))}
+        </div>
+
         <div className="grid grid-cols-7 gap-1.5">
           {diasCalendario.map((d, i) => (
             <div
               key={i}
-              title={d.fecha.toLocaleDateString('es-ES')}
+              title={d.fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
               className={`aspect-square rounded-sm ${
+                d.esFuturo ? 'bg-transparent border border-dashed border-neutral-800' :
                 d.entreno ? 'bg-red-600' : 'bg-neutral-800'
               } ${d.esHoy ? 'ring-2 ring-white/50' : ''}`}
             />
