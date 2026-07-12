@@ -26,6 +26,7 @@ export default function Home() {
   const routines = useStore((s) => s.routines)
   const logs = useStore((s) => s.logs)
   const weightLogs = useStore((s) => s.weightLogs)
+  const manualDays = useStore((s) => s.manualDays)
   const [frase, setFrase] = useState('')
   const [fadeIn, setFadeIn] = useState(true)
 
@@ -50,7 +51,7 @@ export default function Home() {
   const todayRoutine = routines.find(r => r.days.some(d => d.toLowerCase() === dayName.toLowerCase()))
   const currentWeight = weightLogs[weightLogs.length - 1]?.weight ?? '-'
   const sessionsThisWeek = logs.length
-  const racha = calcularRacha(logs)
+  const racha = calcularRacha(logs, manualDays)
 
   return (
     <div className="px-5 pt-8 max-w-md mx-auto">

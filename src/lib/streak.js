@@ -1,8 +1,10 @@
-﻿// Calcula cuántos días consecutivos ha entrenado el usuario, a partir de sus logs
-export function calcularRacha(logs) {
-  if (!logs || !logs.length) return 0
+﻿// Calcula cuántos días consecutivos ha entrenado el usuario, a partir de sus logs y dias marcados manualmente
+export function calcularRacha(logs, manualDays = []) {
+  const fechasLogs = (logs || []).map((l) => new Date(l.date).toDateString())
+  const todasLasFechas = [...new Set([...fechasLogs, ...(manualDays || [])])]
+  if (!todasLasFechas.length) return 0
 
-  const dias = [...new Set(logs.map((l) => new Date(l.date).toDateString()))]
+  const dias = todasLasFechas
     .map((d) => new Date(d))
     .sort((a, b) => b - a)
 

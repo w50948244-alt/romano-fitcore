@@ -8,8 +8,9 @@ const DIAS_SEMANA = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
 // Genera el mes completo (mesRef) en semanas de lunes a domingo,
 // incluyendo dias del mes anterior/siguiente para completar la cuadricula
-function generarDiasCalendario(logs, mesRef) {
+function generarDiasCalendario(logs, mesRef, manualDays) {
   const diasConEntreno = new Set(logs.map((l) => new Date(l.date).toDateString()))
+  const manualSet = new Set(manualDays || [])
 
   const hoy = new Date()
   hoy.setHours(0, 0, 0, 0)
@@ -29,10 +30,13 @@ function generarDiasCalendario(logs, mesRef) {
   const cursor = new Date(inicio)
   while (cursor <= fin) {
     const fecha = new Date(cursor)
+    const fechaTexto = fecha.toDateString()
     dias.push({
       fecha,
-      entreno: diasConEntreno.has(fecha.toDateString()),
-      esHoy: fecha.toDateString() === hoy.toDateString(),
+      fechaTexto,
+      entreno: diasConEntreno.has(fechaTexto) || manualSet.has(fechaTexto),
+      esManual: manualSet.has(fechaTexto) && !diasConEntreno.has(fechaTexto),
+      esHoy: fechaTexto === hoy.toDateString(),
       esFuturo: fecha > hoy,
       esOtroMes: fecha.getMonth() !== mesRef.getMonth(),
     })
@@ -52,6 +56,8 @@ export default function Progress() {
   const personalRecords = useStore((s) => s.personalRecords)
   const logs = useStore((s) => s.logs)
   const profile = useStore((s) => s.profile)
+  const manualDays = useStore((s) => s.manualDays)
+  const toggleManualDay = useStore((s) => s.toggleManualDay)
   const [weight, setWeight] = useState('')
   const [mesSeleccionado, setMesSeleccionado] = useState(() => new Date())
   const canvasRef = useRef(null)
@@ -62,8 +68,8 @@ export default function Progress() {
   }))
 
   const recordsOrdenados = Object.entries(personalRecords || {}).sort((a, b) => b[1].kg - a[1].kg)
-  const diasCalendario = generarDiasCalendario(logs, mesSeleccionado)
-  const racha = calcularRacha(logs)
+  const diasCalendario = generarDiasCalendario(logs, mesSeleccionado, manualDays)
+  const racha = calcularRacha(logs, manualDays)
 
   const hoy = new Date()
   const esMesActual = mesSeleccionado.getMonth() === hoy.getMonth() && mesSeleccionado.getFullYear() === hoy.getFullYear()
@@ -188,24 +194,31 @@ export default function Progress() {
 
         <div className="grid grid-cols-7 gap-1.5">
           {diasCalendario.map((d, i) => (
-            <div
+            <button
               key={i}
-              title={d.fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-              className={`aspect-square rounded-sm flex items-center justify-center text-[9px] ${
+              onClick={() => !d.esFuturo && toggleManualDay(d.fechaTexto)}
+              disabled={d.esFuturo}
+              title={
+                d.esFuturo
+                  ? d.fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+                  : `${d.fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} — clic para ${d.entreno ? 'desmarcar' : 'marcar'}`
+              }
+              className={`aspect-square rounded-sm flex items-center justify-center text-[9px] transition ${
                 d.esOtroMes ? 'opacity-20' : ''
               } ${
-                d.esFuturo ? 'bg-transparent border border-dashed border-neutral-800 text-neutral-700' :
-                d.entreno ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-600'
+                d.esFuturo ? 'bg-transparent border border-dashed border-neutral-800 text-neutral-700 cursor-default' :
+                d.entreno ? 'bg-red-600 text-white hover:bg-red-700 cursor-pointer' : 'bg-neutral-800 text-neutral-600 hover:bg-neutral-700 cursor-pointer'
               } ${d.esHoy ? 'ring-2 ring-white/50' : ''}`}
             >
               {d.fecha.getDate()}
-            </div>
+            </button>
           ))}
         </div>
         <div className="flex items-center gap-1.5 mt-3 text-[10px] text-neutral-600">
           <div className="w-2.5 h-2.5 rounded-sm bg-neutral-800" /> sin entrenar
           <div className="w-2.5 h-2.5 rounded-sm bg-red-600 ml-2" /> entrenaste
         </div>
+        <p className="text-[10px] text-neutral-600 mt-1">Toca un día para marcarlo o desmarcarlo</p>
       </div>
 
       <div className="mt-4 bg-neutral-900 rounded-xl p-4">

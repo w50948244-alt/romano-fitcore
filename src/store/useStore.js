@@ -33,17 +33,18 @@ const useStore = create((set, get) => ({
   logs: [],
   weightLogs: [],
   personalRecords: {}, // { 'Press banca': { kg: 80, date: '...' }, ... }
+  manualDays: [], // fechas (toDateString) marcadas manualmente como entrenadas
   cargandoDatos: true,
 
   addRoutine: (routine) => set((s) => {
     const routines = [...s.routines, { ...routine, id: Date.now().toString() }]
-    guardarDatosUsuario(s.profile.userId, { profile: s.profile, routines, logs: s.logs, weightLogs: s.weightLogs, personalRecords: s.personalRecords })
+    guardarDatosUsuario(s.profile.userId, { profile: s.profile, routines, logs: s.logs, weightLogs: s.weightLogs, personalRecords: s.personalRecords, manualDays: s.manualDays })
     return { routines }
   }),
 
   deleteRoutine: (id) => set((s) => {
     const routines = s.routines.filter(r => r.id !== id)
-    guardarDatosUsuario(s.profile.userId, { profile: s.profile, routines, logs: s.logs, weightLogs: s.weightLogs, personalRecords: s.personalRecords })
+    guardarDatosUsuario(s.profile.userId, { profile: s.profile, routines, logs: s.logs, weightLogs: s.weightLogs, personalRecords: s.personalRecords, manualDays: s.manualDays })
     return { routines }
   }),
 
@@ -62,7 +63,7 @@ const useStore = create((set, get) => ({
         }
       })
 
-      guardarDatosUsuario(s.profile.userId, { profile: s.profile, routines: s.routines, logs, weightLogs: s.weightLogs, personalRecords })
+      guardarDatosUsuario(s.profile.userId, { profile: s.profile, routines: s.routines, logs, weightLogs: s.weightLogs, personalRecords, manualDays: s.manualDays })
       return { logs, personalRecords }
     })
     return nuevosRecords
@@ -71,20 +72,30 @@ const useStore = create((set, get) => ({
   addWeightLog: (weight) => set((s) => {
     const weightLogs = [...s.weightLogs, { date: new Date().toISOString(), weight }]
     const profile = s.profile.weightStart == null ? { ...s.profile, weightStart: weight } : s.profile
-    guardarDatosUsuario(s.profile.userId, { profile, routines: s.routines, logs: s.logs, weightLogs, personalRecords: s.personalRecords })
+    guardarDatosUsuario(s.profile.userId, { profile, routines: s.routines, logs: s.logs, weightLogs, personalRecords: s.personalRecords, manualDays: s.manualDays })
     return { weightLogs, profile }
   }),
 
   updateProfile: (data) => set((s) => {
     const profile = { ...s.profile, ...data }
-    guardarDatosUsuario(profile.userId, { profile, routines: s.routines, logs: s.logs, weightLogs: s.weightLogs, personalRecords: s.personalRecords })
+    guardarDatosUsuario(profile.userId, { profile, routines: s.routines, logs: s.logs, weightLogs: s.weightLogs, personalRecords: s.personalRecords, manualDays: s.manualDays })
     return { profile }
+  }),
+
+  // Marca o desmarca un dia especifico (pasado) como entrenado, sin necesidad de un log completo
+  toggleManualDay: (fechaTexto) => set((s) => {
+    const yaEsta = s.manualDays.includes(fechaTexto)
+    const manualDays = yaEsta
+      ? s.manualDays.filter((f) => f !== fechaTexto)
+      : [...s.manualDays, fechaTexto]
+    guardarDatosUsuario(s.profile.userId, { profile: s.profile, routines: s.routines, logs: s.logs, weightLogs: s.weightLogs, personalRecords: s.personalRecords, manualDays })
+    return { manualDays }
   }),
 
   // Se llama cuando Supabase confirma la sesion (login con Google o con correo)
   loadProfileForUser: async (user) => {
     if (!user) {
-      set({ profile: perfilVacio, routines: rutinasPorDefecto, logs: [], weightLogs: [], personalRecords: {}, cargandoDatos: false })
+      set({ profile: perfilVacio, routines: rutinasPorDefecto, logs: [], weightLogs: [], personalRecords: {}, manualDays: [], cargandoDatos: false })
       return
     }
 
@@ -120,6 +131,7 @@ const useStore = create((set, get) => ({
         logs: fuente.logs ?? [],
         weightLogs: fuente.weightLogs ?? [],
         personalRecords: fuente.personalRecords ?? {},
+        manualDays: fuente.manualDays ?? [],
         cargandoDatos: false,
       })
       if (!datosNube && guardadoLocal) {
@@ -132,6 +144,7 @@ const useStore = create((set, get) => ({
         logs: [],
         weightLogs: [],
         personalRecords: {},
+        manualDays: [],
         cargandoDatos: false,
       })
     }
