@@ -1,47 +1,49 @@
 import { useState, useRef } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { Trophy, Share2, Flame } from 'lucide-react'
+import { Trophy, Share2, Flame, ChevronLeft, ChevronRight } from 'lucide-react'
 import useStore from '../store/useStore'
 import { calcularRacha } from '../lib/streak'
 
 const DIAS_SEMANA = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
-// Genera 5 semanas completas (lunes a domingo) terminando en la semana actual
-function generarDiasCalendario(logs) {
+// Genera el mes completo (mesRef) en semanas de lunes a domingo,
+// incluyendo dias del mes anterior/siguiente para completar la cuadricula
+function generarDiasCalendario(logs, mesRef) {
   const diasConEntreno = new Set(logs.map((l) => new Date(l.date).toDateString()))
 
   const hoy = new Date()
   hoy.setHours(0, 0, 0, 0)
-  const diaSemana = (hoy.getDay() + 6) % 7 // lunes = 0 ... domingo = 6
-  const lunesDeEstaSemana = new Date(hoy)
-  lunesDeEstaSemana.setDate(hoy.getDate() - diaSemana)
-  const inicio = new Date(lunesDeEstaSemana)
-  inicio.setDate(lunesDeEstaSemana.getDate() - 28) // retrocede 4 semanas mas = 5 semanas totales
+
+  const primerDiaMes = new Date(mesRef.getFullYear(), mesRef.getMonth(), 1)
+  const ultimoDiaMes = new Date(mesRef.getFullYear(), mesRef.getMonth() + 1, 0)
+
+  const diaSemanaInicio = (primerDiaMes.getDay() + 6) % 7 // lunes = 0
+  const inicio = new Date(primerDiaMes)
+  inicio.setDate(primerDiaMes.getDate() - diaSemanaInicio)
+
+  const diaSemanaFin = (ultimoDiaMes.getDay() + 6) % 7
+  const fin = new Date(ultimoDiaMes)
+  fin.setDate(ultimoDiaMes.getDate() + (6 - diaSemanaFin))
 
   const dias = []
-  for (let i = 0; i < 35; i++) {
-    const fecha = new Date(inicio)
-    fecha.setDate(inicio.getDate() + i)
+  const cursor = new Date(inicio)
+  while (cursor <= fin) {
+    const fecha = new Date(cursor)
     dias.push({
       fecha,
       entreno: diasConEntreno.has(fecha.toDateString()),
       esHoy: fecha.toDateString() === hoy.toDateString(),
       esFuturo: fecha > hoy,
+      esOtroMes: fecha.getMonth() !== mesRef.getMonth(),
     })
+    cursor.setDate(cursor.getDate() + 1)
   }
   return dias
 }
 
-// Arma el texto del mes (o meses) que cubre el calendario, ej: "Junio - Julio 2026"
-function textoMeses(dias) {
-  const primero = dias[0].fecha
-  const ultimo = dias[dias.length - 1].fecha
-  const mesA = primero.toLocaleDateString('es-ES', { month: 'long' })
-  const mesB = ultimo.toLocaleDateString('es-ES', { month: 'long' })
-  const anio = ultimo.getFullYear()
-  const mesATxt = mesA.charAt(0).toUpperCase() + mesA.slice(1)
-  const mesBTxt = mesB.charAt(0).toUpperCase() + mesB.slice(1)
-  return mesA === mesB ? `${mesATxt} ${anio}` : `${mesATxt} - ${mesBTxt} ${anio}`
+function textoMes(mesRef) {
+  const texto = mesRef.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
 
 export default function Progress() {
@@ -51,6 +53,7 @@ export default function Progress() {
   const logs = useStore((s) => s.logs)
   const profile = useStore((s) => s.profile)
   const [weight, setWeight] = useState('')
+  const [mesSeleccionado, setMesSeleccionado] = useState(() => new Date())
   const canvasRef = useRef(null)
 
   const chartData = weightLogs.map((w) => ({
@@ -59,8 +62,19 @@ export default function Progress() {
   }))
 
   const recordsOrdenados = Object.entries(personalRecords || {}).sort((a, b) => b[1].kg - a[1].kg)
-  const diasCalendario = generarDiasCalendario(logs)
+  const diasCalendario = generarDiasCalendario(logs, mesSeleccionado)
   const racha = calcularRacha(logs)
+
+  const hoy = new Date()
+  const esMesActual = mesSeleccionado.getMonth() === hoy.getMonth() && mesSeleccionado.getFullYear() === hoy.getFullYear()
+
+  const mesAnterior = () => {
+    setMesSeleccionado((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))
+  }
+  const mesSiguiente = () => {
+    if (esMesActual) return
+    setMesSeleccionado((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))
+  }
 
   const handleAdd = () => {
     if (!weight) return
@@ -153,8 +167,17 @@ export default function Progress() {
 
       <div className="mt-4 bg-neutral-900 rounded-xl p-4">
         <div className="flex justify-between items-center mb-3">
-          <p className="text-neutral-500 text-xs uppercase">Constancia</p>
-          <p className="text-neutral-400 text-xs font-medium">{textoMeses(diasCalendario)}</p>
+          <button onClick={mesAnterior} className="p-1 text-neutral-400 hover:text-white transition">
+            <ChevronLeft size={18} />
+          </button>
+          <p className="text-sm font-medium">{textoMes(mesSeleccionado)}</p>
+          <button
+            onClick={mesSiguiente}
+            disabled={esMesActual}
+            className={`p-1 transition ${esMesActual ? 'text-neutral-800' : 'text-neutral-400 hover:text-white'}`}
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
 
         <div className="grid grid-cols-7 gap-1.5 mb-1.5">
@@ -168,11 +191,15 @@ export default function Progress() {
             <div
               key={i}
               title={d.fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-              className={`aspect-square rounded-sm ${
-                d.esFuturo ? 'bg-transparent border border-dashed border-neutral-800' :
-                d.entreno ? 'bg-red-600' : 'bg-neutral-800'
+              className={`aspect-square rounded-sm flex items-center justify-center text-[9px] ${
+                d.esOtroMes ? 'opacity-20' : ''
+              } ${
+                d.esFuturo ? 'bg-transparent border border-dashed border-neutral-800 text-neutral-700' :
+                d.entreno ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-600'
               } ${d.esHoy ? 'ring-2 ring-white/50' : ''}`}
-            />
+            >
+              {d.fecha.getDate()}
+            </div>
           ))}
         </div>
         <div className="flex items-center gap-1.5 mt-3 text-[10px] text-neutral-600">
