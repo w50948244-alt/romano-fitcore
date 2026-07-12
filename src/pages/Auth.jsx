@@ -17,21 +17,31 @@ export default function Auth() {
     setError('')
     setMessage('')
 
-    if (mode === 'login') {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setError(error.message)
-    } else if (mode === 'register') {
-      const { error } = await supabase.auth.signUp({ email, password })
-      if (error) setError(error.message)
-      else setMessage('Revisa tu correo para confirmar tu cuenta.')
-    } else if (mode === 'recover') {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
-      if (error) setError(error.message)
-      else setMessage('Te enviamos un correo para restablecer tu contraseña.')
+    try {
+      if (mode === 'login') {
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) setError(error.message)
+      } else if (mode === 'register') {
+        const { error } = await supabase.auth.signUp({ email, password })
+        if (error) setError(error.message)
+        else setMessage('Revisa tu correo para confirmar tu cuenta.')
+      } else if (mode === 'recover') {
+        if (!email) {
+          setError('Escribe tu correo primero.')
+        } else {
+          const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/reset-password`,
+          })
+          if (error) setError(error.message)
+          else setMessage('Te enviamos un correo para restablecer tu contraseña.')
+        }
+      }
+    } catch (err) {
+      console.error('Error inesperado:', err)
+      setError('Error inesperado: ' + (err?.message || JSON.stringify(err)))
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleGoogle = async () => {
