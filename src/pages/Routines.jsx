@@ -5,8 +5,13 @@ import { generarRutinaRecomendada, generarRutinaPorGrupo, generarHorarioSemanal,
 
 const kgALb = (kg) => Math.round(kg * 2.20462 * 10) / 10
 
-const GRUPOS = ['Pecho', 'Espalda', 'Pierna']
+const GRUPOS = ['Pecho', 'Espalda', 'Pierna', 'Hombro', 'Brazo', 'Trapecio', 'Antebrazo', 'Pantorrilla', 'Core']
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+const NIVELES = [
+  { key: 'principiante', label: 'Principiante' },
+  { key: 'intermedio', label: 'Intermedio' },
+  { key: 'avanzado', label: 'Avanzado' },
+]
 
 export default function Routines() {
   const routines = useStore((s) => s.routines)
@@ -19,6 +24,7 @@ export default function Routines() {
   const [guiaAbierta, setGuiaAbierta] = useState(null)
   const [showHorario, setShowHorario] = useState(false)
   const [diasElegidos, setDiasElegidos] = useState([])
+  const [nivelElegido, setNivelElegido] = useState(null) // null = automatico segun perfil
 
   const handleAdd = () => {
     if (!name.trim()) return
@@ -32,7 +38,7 @@ export default function Routines() {
       alert('Completa tu edad, altura y peso en Perfil para generar una rutina a tu medida.')
       return
     }
-    const rutina = generarRutinaRecomendada(profile)
+    const rutina = generarRutinaRecomendada(profile, nivelElegido)
     addRoutine(rutina)
   }
 
@@ -41,7 +47,7 @@ export default function Routines() {
       alert('Completa tu edad, altura y peso en Perfil para generar una rutina a tu medida.')
       return
     }
-    const rutina = generarRutinaPorGrupo(profile, grupo)
+    const rutina = generarRutinaPorGrupo(profile, grupo, nivelElegido)
     addRoutine(rutina)
   }
 
@@ -60,9 +66,8 @@ export default function Routines() {
       alert('Elige al menos un día de entrenamiento.')
       return
     }
-    // Ordena los dias elegidos segun el orden real de la semana
     const diasOrdenados = DIAS.filter((d) => diasElegidos.includes(d))
-    const nuevasRutinas = generarHorarioSemanal(profile, diasOrdenados)
+    const nuevasRutinas = generarHorarioSemanal(profile, diasOrdenados, nivelElegido)
     nuevasRutinas.forEach((r) => addRoutine(r))
     setShowHorario(false)
     setDiasElegidos([])
@@ -77,9 +82,30 @@ export default function Routines() {
         </button>
       </div>
 
+      <div className="mt-4">
+        <p className="text-neutral-500 text-xs uppercase mb-2">Nivel (opcional, si no eliges se calcula automático)</p>
+        <div className="flex bg-neutral-900 rounded-xl p-1">
+          <button
+            onClick={() => setNivelElegido(null)}
+            className={`flex-1 py-2 rounded-lg text-xs font-medium transition ${!nivelElegido ? 'bg-red-600 text-white' : 'text-neutral-400'}`}
+          >
+            Automático
+          </button>
+          {NIVELES.map((n) => (
+            <button
+              key={n.key}
+              onClick={() => setNivelElegido(n.key)}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition ${nivelElegido === n.key ? 'bg-red-600 text-white' : 'text-neutral-400'}`}
+            >
+              {n.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <button
         onClick={handleRecomendada}
-        className="w-full mt-4 bg-gradient-to-r from-red-600 to-red-700 rounded-xl p-4 flex items-center gap-3 hover:opacity-90 transition"
+        className="w-full mt-3 bg-gradient-to-r from-red-600 to-red-700 rounded-xl p-4 flex items-center gap-3 hover:opacity-90 transition"
       >
         <Sparkles size={22} className="text-white" />
         <div className="text-left">
