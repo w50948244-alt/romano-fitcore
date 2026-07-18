@@ -5,6 +5,8 @@ import { buscarGuia } from '../lib/exerciseLibrary'
 import { sonidoDescansoTerminado, sonidoLogro } from '../lib/sound'
 import Confetti from '../components/Confetti'
 
+const kgALb = (kg) => Math.round(kg * 2.20462 * 10) / 10
+
 export default function Workout() {
   const routines = useStore((s) => s.routines)
   const addLog = useStore((s) => s.addLog)
@@ -170,6 +172,9 @@ export default function Workout() {
                   />
                 ))}
               </div>
+              <p className="text-neutral-600 text-[10px] mt-1 text-right">
+                {data[ex.id]?.kg ?? 0}kg ≈ {kgALb(data[ex.id]?.kg ?? 0)}lb
+              </p>
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => iniciarDescanso(60)}

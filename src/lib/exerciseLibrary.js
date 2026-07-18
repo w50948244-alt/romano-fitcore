@@ -169,3 +169,43 @@ export function generarRutinaRecomendada(profile) {
     exercises: ejercicios.map((ex, i) => ({ ...ex, id: `rec_${Date.now()}_${i}` })),
   }
 }
+
+// Genera una rutina usando solo ejercicios del grupo muscular elegido (Pecho, Espalda, Pierna, etc.)
+// ajustando el peso sugerido segun el perfil del usuario
+export function generarRutinaPorGrupo(profile, grupoElegido) {
+  const edad = Number(profile.age) || 25
+  const peso = Number(profile.weightStart) || 70
+  const altura = Number(profile.height) || 170
+
+  const imc = peso / Math.pow(altura / 100, 2)
+
+  let nivel = 'intermedio'
+  if (edad >= 45 || imc >= 30) nivel = 'principiante'
+  else if (edad <= 30 && imc < 25) nivel = 'avanzado'
+
+  const cargasBase = {
+    principiante: { sets: 3, reps: 12, factor: 0.4 },
+    intermedio: { sets: 4, reps: 10, factor: 0.6 },
+    avanzado: { sets: 4, reps: 8, factor: 0.8 },
+  }[nivel]
+
+  const kgSugerido = () =>
+    Math.max(0, Math.round(((peso * cargasBase.factor * 0.6) / 2.5)) * 2.5)
+
+  // Busca todos los ejercicios de la libreria que pertenezcan a ese grupo
+  const ejercicios = Object.entries(libreriaEjercicios)
+    .filter(([, info]) => info.grupo.includes(grupoElegido))
+    .map(([nombre], i) => ({
+      name: nombre,
+      sets: cargasBase.sets,
+      reps: cargasBase.reps,
+      kg: kgSugerido(),
+      id: `rec_${Date.now()}_${i}`,
+    }))
+
+  return {
+    name: `${grupoElegido} (nivel ${nivel})`,
+    days: [],
+    exercises: ejercicios,
+  }
+}

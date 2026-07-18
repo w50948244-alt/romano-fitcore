@@ -3,6 +3,8 @@ import { Sun, Moon } from 'lucide-react'
 import useStore from '../store/useStore'
 import { supabase } from '../lib/supabase'
 
+const kgALb = (kg) => Math.round(kg * 2.20462 * 10) / 10
+
 export default function Profile() {
   const profile = useStore((s) => s.profile)
   const updateProfile = useStore((s) => s.updateProfile)
@@ -46,10 +48,16 @@ export default function Profile() {
         <div>
           <p className="text-xl font-bold">{profile.weightStart != null ? `${profile.weightStart}kg` : '-'}</p>
           <p className="text-neutral-500 text-xs mt-1">Peso inicial</p>
+          {profile.weightStart != null && (
+            <p className="text-neutral-600 text-[10px] mt-0.5">{kgALb(profile.weightStart)}lb</p>
+          )}
         </div>
         <div>
           <p className="text-xl font-bold text-red-500">{currentWeight != null ? `${currentWeight}kg` : '-'}</p>
           <p className="text-neutral-500 text-xs mt-1">Peso actual</p>
+          {currentWeight != null && (
+            <p className="text-neutral-600 text-[10px] mt-0.5">{kgALb(currentWeight)}lb</p>
+          )}
         </div>
       </div>
 

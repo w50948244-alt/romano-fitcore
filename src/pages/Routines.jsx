@@ -1,7 +1,11 @@
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown, Sparkles, Info } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, Sparkles, Info, Dumbbell } from 'lucide-react'
 import useStore from '../store/useStore'
-import { generarRutinaRecomendada, buscarGuia } from '../lib/exerciseLibrary'
+import { generarRutinaRecomendada, generarRutinaPorGrupo, buscarGuia } from '../lib/exerciseLibrary'
+
+const kgALb = (kg) => Math.round(kg * 2.20462 * 10) / 10
+
+const GRUPOS = ['Pecho', 'Espalda', 'Pierna']
 
 export default function Routines() {
   const routines = useStore((s) => s.routines)
@@ -29,6 +33,15 @@ export default function Routines() {
     addRoutine(rutina)
   }
 
+  const handleGrupo = (grupo) => {
+    if (!profile.age || !profile.height || !profile.weightStart) {
+      alert('Completa tu edad, altura y peso en Perfil para generar una rutina a tu medida.')
+      return
+    }
+    const rutina = generarRutinaPorGrupo(profile, grupo)
+    addRoutine(rutina)
+  }
+
   return (
     <div className="px-5 pt-8 max-w-md mx-auto">
       <div className="flex justify-between items-center">
@@ -48,6 +61,22 @@ export default function Routines() {
           <p className="text-red-100 text-xs">Según tu peso, edad, altura y objetivo</p>
         </div>
       </button>
+
+      <div className="mt-3">
+        <p className="text-neutral-500 text-xs uppercase mb-2">O elige qué entrenar hoy</p>
+        <div className="grid grid-cols-3 gap-2">
+          {GRUPOS.map((g) => (
+            <button
+              key={g}
+              onClick={() => handleGrupo(g)}
+              className="bg-neutral-900 hover:bg-neutral-800 transition rounded-xl p-3 flex flex-col items-center gap-1.5"
+            >
+              <Dumbbell size={18} className="text-red-500" />
+              <span className="text-xs font-medium">{g}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {showForm && (
         <div className="mt-4 bg-neutral-900 rounded-xl p-4 flex gap-2">
@@ -87,7 +116,7 @@ export default function Routines() {
                       <div className="flex justify-between items-center">
                         <span>{ex.name}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-neutral-500">{ex.sets}x{ex.reps} · {ex.kg}kg</span>
+                          <span className="text-neutral-500">{ex.sets}x{ex.reps} · {ex.kg}kg <span className="text-neutral-600">({kgALb(ex.kg)}lb)</span></span>
                           <button onClick={() => setGuiaAbierta(guiaAbierta === idGuia ? null : idGuia)} className="text-red-500">
                             <Info size={15} />
                           </button>
