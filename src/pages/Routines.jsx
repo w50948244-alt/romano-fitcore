@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown, Sparkles, Info, Dumbbell } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, Sparkles, Info, Dumbbell, CalendarDays, Check } from 'lucide-react'
 import useStore from '../store/useStore'
-import { generarRutinaRecomendada, generarRutinaPorGrupo, buscarGuia } from '../lib/exerciseLibrary'
+import { generarRutinaRecomendada, generarRutinaPorGrupo, generarHorarioSemanal, buscarGuia } from '../lib/exerciseLibrary'
 
 const kgALb = (kg) => Math.round(kg * 2.20462 * 10) / 10
 
 const GRUPOS = ['Pecho', 'Espalda', 'Pierna']
+const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
 export default function Routines() {
   const routines = useStore((s) => s.routines)
@@ -16,6 +17,8 @@ export default function Routines() {
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [guiaAbierta, setGuiaAbierta] = useState(null)
+  const [showHorario, setShowHorario] = useState(false)
+  const [diasElegidos, setDiasElegidos] = useState([])
 
   const handleAdd = () => {
     if (!name.trim()) return
@@ -40,6 +43,29 @@ export default function Routines() {
     }
     const rutina = generarRutinaPorGrupo(profile, grupo)
     addRoutine(rutina)
+  }
+
+  const toggleDia = (dia) => {
+    setDiasElegidos((prev) =>
+      prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia]
+    )
+  }
+
+  const generarHorario = () => {
+    if (!profile.age || !profile.height || !profile.weightStart) {
+      alert('Completa tu edad, altura y peso en Perfil para generar tu horario.')
+      return
+    }
+    if (diasElegidos.length === 0) {
+      alert('Elige al menos un día de entrenamiento.')
+      return
+    }
+    // Ordena los dias elegidos segun el orden real de la semana
+    const diasOrdenados = DIAS.filter((d) => diasElegidos.includes(d))
+    const nuevasRutinas = generarHorarioSemanal(profile, diasOrdenados)
+    nuevasRutinas.forEach((r) => addRoutine(r))
+    setShowHorario(false)
+    setDiasElegidos([])
   }
 
   return (
@@ -77,6 +103,47 @@ export default function Routines() {
           ))}
         </div>
       </div>
+
+      <button
+        onClick={() => setShowHorario(!showHorario)}
+        className="w-full mt-3 bg-neutral-900 hover:bg-neutral-800 transition rounded-xl p-4 flex items-center gap-3"
+      >
+        <CalendarDays size={22} className="text-red-500" />
+        <div className="text-left">
+          <p className="font-semibold text-sm">Crear mi horario semanal completo</p>
+          <p className="text-neutral-500 text-xs">Elige tus días y te armamos una rutina para cada uno</p>
+        </div>
+      </button>
+
+      {showHorario && (
+        <div className="mt-3 bg-neutral-900 rounded-xl p-4">
+          <p className="text-sm font-medium mb-3">¿Qué días vas a entrenar?</p>
+          <div className="grid grid-cols-2 gap-2">
+            {DIAS.map((dia) => (
+              <button
+                key={dia}
+                onClick={() => toggleDia(dia)}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition ${
+                  diasElegidos.includes(dia) ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-400'
+                }`}
+              >
+                {dia}
+                {diasElegidos.includes(dia) && <Check size={15} />}
+              </button>
+            ))}
+          </div>
+          <p className="text-neutral-600 text-[11px] mt-3">
+            {diasElegidos.length === 0 && 'Selecciona al menos un día.'}
+            {diasElegidos.length > 0 && `Con ${diasElegidos.length} ${diasElegidos.length === 1 ? 'día' : 'días'}, te armamos un split de ${diasElegidos.length === 1 ? 'cuerpo completo' : diasElegidos.length <= 2 ? 'tren superior/inferior' : diasElegidos.length === 3 ? 'empuje/tirón/pierna' : 'por grupo muscular'}.`}
+          </p>
+          <button
+            onClick={generarHorario}
+            className="w-full bg-red-600 hover:bg-red-700 transition rounded-lg py-2.5 text-sm font-medium mt-3"
+          >
+            Generar mi horario
+          </button>
+        </div>
+      )}
 
       {showForm && (
         <div className="mt-4 bg-neutral-900 rounded-xl p-4 flex gap-2">
