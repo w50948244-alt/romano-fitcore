@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import useStore from '../store/useStore'
 import { calcularRacha } from '../lib/streak'
 
+const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
 const frases = [
   "El dolor que sientes hoy es la fuerza que sentirás mañana.",
   "No pares cuando estés cansado. Para cuando hayas terminado.",
@@ -112,6 +114,41 @@ export default function Home() {
           <p className="text-2xl font-bold text-white">{routines.length}</p>
           <p className="text-neutral-500 text-xs mt-1">rutinas</p>
         </div>
+      </div>
+
+      <div className="mt-5 bg-neutral-900 rounded-xl p-4">
+        <p className="text-neutral-500 text-xs uppercase mb-3">Tu semana</p>
+        <div className="space-y-2">
+          {DIAS_SEMANA.map((dia) => {
+            const rutinaDelDia = routines.find((r) => r.days.some((d) => d.toLowerCase() === dia.toLowerCase()))
+            const esHoy = dia.toLowerCase() === dayName.toLowerCase()
+            return (
+              <div
+                key={dia}
+                className={`flex items-center justify-between rounded-lg px-3 py-2 ${
+                  esHoy ? 'bg-red-600/15 border border-red-600/40' : ''
+                }`}
+              >
+                <span className={`text-xs w-9 ${esHoy ? 'text-red-400 font-semibold' : 'text-neutral-500'}`}>
+                  {dia.slice(0, 3)}
+                </span>
+                {rutinaDelDia ? (
+                  <span className={`text-xs flex-1 ml-2 truncate ${esHoy ? 'text-white font-medium' : 'text-neutral-300'}`}>
+                    {rutinaDelDia.name}
+                  </span>
+                ) : (
+                  <span className="text-xs flex-1 ml-2 text-neutral-700">Descanso</span>
+                )}
+                {esHoy && rutinaDelDia && (
+                  <span className="text-[10px] text-red-400 font-semibold">HOY</span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        <Link to="/rutinas" className="block text-center text-red-500 text-xs mt-3 hover:underline">
+          Editar mi horario →
+        </Link>
       </div>
     </div>
   )
