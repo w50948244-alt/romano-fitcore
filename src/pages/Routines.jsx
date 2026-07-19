@@ -17,6 +17,7 @@ export default function Routines() {
   const routines = useStore((s) => s.routines)
   const deleteRoutine = useStore((s) => s.deleteRoutine)
   const addRoutine = useStore((s) => s.addRoutine)
+  const updateRoutineDays = useStore((s) => s.updateRoutineDays)
   const profile = useStore((s) => s.profile)
   const [expanded, setExpanded] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -61,6 +62,14 @@ export default function Routines() {
     const rutina = generarRutinaPorGrupo(profile, gruposElegidos, nivelElegido)
     addRoutine(rutina)
     setGruposElegidos([])
+  }
+
+  const toggleDiaDeRutina = (rutina, dia) => {
+    const yaLoTiene = rutina.days.includes(dia)
+    const nuevosDias = yaLoTiene
+      ? rutina.days.filter((d) => d !== dia)
+      : [...rutina.days, dia]
+    updateRoutineDays(rutina.id, nuevosDias)
   }
 
   const toggleDia = (dia) => {
@@ -226,6 +235,22 @@ export default function Routines() {
             </div>
             {expanded === r.id && (
               <div className="mt-3 space-y-2 border-t border-neutral-800 pt-3">
+                <div className="mb-3">
+                  <p className="text-neutral-500 text-xs uppercase mb-2">¿Qué días haces esta rutina?</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DIAS.map((dia) => (
+                      <button
+                        key={dia}
+                        onClick={() => toggleDiaDeRutina(r, dia)}
+                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition ${
+                          r.days.includes(dia) ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-400'
+                        }`}
+                      >
+                        {dia.slice(0, 3)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {r.exercises.length === 0 && <p className="text-neutral-600 text-sm">Sin ejercicios aún.</p>}
                 {r.exercises.map((ex) => {
                   const idGuia = `${r.id}_${ex.id}`

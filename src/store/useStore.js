@@ -48,6 +48,13 @@ const useStore = create((set, get) => ({
     return { routines }
   }),
 
+  // Cambia los dias de la semana asignados a una rutina existente
+  updateRoutineDays: (id, days) => set((s) => {
+    const routines = s.routines.map((r) => (r.id === id ? { ...r, days } : r))
+    guardarDatosUsuario(s.profile.userId, { profile: s.profile, routines, logs: s.logs, weightLogs: s.weightLogs, personalRecords: s.personalRecords, manualDays: s.manualDays })
+    return { routines }
+  }),
+
   // exercisesDetail = [{ name, sets, reps, kg }] - Devuelve la lista de nombres con récord nuevo
   addLog: (log, exercisesDetail = []) => {
     let nuevosRecords = []
