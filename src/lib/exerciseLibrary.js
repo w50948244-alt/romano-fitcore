@@ -655,12 +655,15 @@ export function generarRutinaRecomendada(profile, nivelForzado) {
   }
 }
 
-export function generarRutinaPorGrupo(profile, grupoElegido, nivelForzado) {
+// gruposElegidos puede ser un string (un solo grupo) o un array de varios grupos combinados
+export function generarRutinaPorGrupo(profile, gruposElegidos, nivelForzado) {
   const { nivel, cargasBase, peso } = calcularNivelYCargas(profile, nivelForzado)
   const kgSugerido = () => Math.max(0, Math.round(((peso * cargasBase.factor * 0.6) / 2.5)) * 2.5)
 
+  const listaGrupos = Array.isArray(gruposElegidos) ? gruposElegidos : [gruposElegidos]
+
   const ejercicios = Object.entries(libreriaEjercicios)
-    .filter(([, info]) => info.grupo.includes(grupoElegido))
+    .filter(([, info]) => listaGrupos.some((g) => info.grupo.includes(g)))
     .map(([nombre], i) => ({
       name: nombre,
       sets: cargasBase.sets,
@@ -670,7 +673,7 @@ export function generarRutinaPorGrupo(profile, grupoElegido, nivelForzado) {
     }))
 
   return {
-    name: `${grupoElegido} (nivel ${nivel})`,
+    name: `${listaGrupos.join(' + ')} (nivel ${nivel})`,
     days: [],
     exercises: ejercicios,
   }

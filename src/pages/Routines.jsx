@@ -25,6 +25,7 @@ export default function Routines() {
   const [showHorario, setShowHorario] = useState(false)
   const [diasElegidos, setDiasElegidos] = useState([])
   const [nivelElegido, setNivelElegido] = useState(null) // null = automatico segun perfil
+  const [gruposElegidos, setGruposElegidos] = useState([])
 
   const handleAdd = () => {
     if (!name.trim()) return
@@ -42,13 +43,24 @@ export default function Routines() {
     addRoutine(rutina)
   }
 
-  const handleGrupo = (grupo) => {
+  const toggleGrupo = (grupo) => {
+    setGruposElegidos((prev) =>
+      prev.includes(grupo) ? prev.filter((g) => g !== grupo) : [...prev, grupo]
+    )
+  }
+
+  const generarPorGrupos = () => {
     if (!profile.age || !profile.height || !profile.weightStart) {
       alert('Completa tu edad, altura y peso en Perfil para generar una rutina a tu medida.')
       return
     }
-    const rutina = generarRutinaPorGrupo(profile, grupo, nivelElegido)
+    if (gruposElegidos.length === 0) {
+      alert('Elige al menos un grupo muscular.')
+      return
+    }
+    const rutina = generarRutinaPorGrupo(profile, gruposElegidos, nivelElegido)
     addRoutine(rutina)
+    setGruposElegidos([])
   }
 
   const toggleDia = (dia) => {
@@ -115,19 +127,33 @@ export default function Routines() {
       </button>
 
       <div className="mt-3">
-        <p className="text-neutral-500 text-xs uppercase mb-2">O elige qué entrenar hoy</p>
+        <p className="text-neutral-500 text-xs uppercase mb-2">Elige uno o varios grupos musculares</p>
         <div className="grid grid-cols-3 gap-2">
           {GRUPOS.map((g) => (
             <button
               key={g}
-              onClick={() => handleGrupo(g)}
-              className="bg-neutral-900 hover:bg-neutral-800 transition rounded-xl p-3 flex flex-col items-center gap-1.5"
+              onClick={() => toggleGrupo(g)}
+              className={`rounded-xl p-3 flex flex-col items-center gap-1.5 transition relative ${
+                gruposElegidos.includes(g) ? 'bg-red-600' : 'bg-neutral-900 hover:bg-neutral-800'
+              }`}
             >
-              <Dumbbell size={18} className="text-red-500" />
+              {gruposElegidos.includes(g) && (
+                <Check size={13} className="absolute top-1.5 right-1.5 text-white" />
+              )}
+              <Dumbbell size={18} className={gruposElegidos.includes(g) ? 'text-white' : 'text-red-500'} />
               <span className="text-xs font-medium">{g}</span>
             </button>
           ))}
         </div>
+
+        {gruposElegidos.length > 0 && (
+          <button
+            onClick={generarPorGrupos}
+            className="w-full bg-red-600 hover:bg-red-700 transition rounded-lg py-2.5 text-sm font-medium mt-3"
+          >
+            Generar rutina de {gruposElegidos.join(' + ')}
+          </button>
+        )}
       </div>
 
       <button
